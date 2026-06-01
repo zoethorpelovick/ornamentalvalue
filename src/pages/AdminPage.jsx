@@ -14,6 +14,39 @@ const emptyForm = {
   sold:      false,
 }
 
+// Parse an Etsy listing page HTML string for title, price, image
+function parseEtsyListing(html) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+
+  // Title — og:title or h1
+  const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content')
+  const h1 = doc.querySelector('h1')?.textContent?.trim()
+  const title = (ogTitle || h1 || '').replace(/\s*\|.*$/, '').trim()
+
+  // Price — look for og:price:amount or structured data
+  const ogPrice = doc.querySelector('meta[property="og:price:amount"]')?.getAttribute('content')
+  let price = ogPrice || ''
+
+  // Try JSON-LD structured data as fallback
+  if (!price) {
+    const scripts = doc.querySelectorAll('script[type="application/ld+json"]')
+    for (const s of scripts) {
+      try {
+        const data = JSON.parse(s.textContent)
+        const offers = data.offers || (data['@graph'] || []).find(n => n.offers)?.offers
+        const offer = Array.isArray(offers) ? offers[0] : offers
+        if (offer?.price) { price = String(offer.price); break }
+      } catch {}
+    }
+  }
+
+  // Image — og:image
+  const image = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
+
+  return { title, price, image }
+}
+
 export default function AdminPage() {
   const [authed,    setAuthed]    = useState(false)
   const [password,  setPassword]  = useState('')
@@ -22,6 +55,8 @@ export default function AdminPage() {
   const [form,      setForm]      = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [saving,    setSaving]    = useState(false)
+  const [fetching,  setFetching]  = useState(false)
+  const [fetchMsg,  setFetchMsg]  = useState('')
   const [message,   setMessage]   = useState('')
 
   function login() {
@@ -46,6 +81,36 @@ export default function AdminPage() {
     if (authed) loadListings()
   }, [authed])
 
+  // Fetch listing details from Etsy via CORS proxy
+  async function fetchFromEtsy() {
+    const url = form.etsy_url.trim()
+    if (!url || !url.includes('etsy.com')) {
+      setFetchMsg('Please enter a valid Etsy listing URL first.')
+      return
+    }
+    setFetching(true)
+    setFetchMsg('Fetching listing details…')
+    try {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
+      const res = await fetch(proxyUrl)
+      const json = await res.json()
+      if (!json.contents) throw new Error('No content returned')
+
+      const { title, price, image } = parseEtsyListing(json.contents)
+
+      setForm(f => ({
+        ...f,
+        title:     title || f.title,
+        price:     price ? String(Math.round(parseFloat(price))) : f.price,
+        image_url: image || f.image_url,
+      }))
+      setFetchMsg(title ? '✓ Details fetched — review and save.' : 'Fetched, but could not parse all fields. Fill in manually.')
+    } catch (err) {
+      setFetchMsg('Could not fetch listing. You can still fill in details manually.')
+    }
+    setFetching(false)
+  }
+
   function handleTagToggle(tag) {
     setForm(f => ({
       ...f,
@@ -65,6 +130,8 @@ export default function AdminPage() {
       tags:      listing.tags || [],
       sold:      listing.sold || false,
     })
+    setFetchMsg('')
+    setMessage('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -72,6 +139,7 @@ export default function AdminPage() {
     setEditingId(null)
     setForm(emptyForm)
     setMessage('')
+    setFetchMsg('')
   }
 
   async function saveListing() {
@@ -82,7 +150,7 @@ export default function AdminPage() {
 
     const payload = {
       title:     form.title.trim(),
-      price:     form.price ? parseFloat(form.price.replace('$', '')) : null,
+      price:     form.price ? parseFloat(String(form.price).replace('$', '')) : null,
       image_url: form.image_url.trim() || null,
       etsy_url:  form.etsy_url.trim(),
       tags:      form.tags,
@@ -103,6 +171,7 @@ export default function AdminPage() {
       setMessage(editingId ? 'Listing updated.' : 'Listing added.')
       setEditingId(null)
       setForm(emptyForm)
+      setFetchMsg('')
       loadListings()
     }
   }
@@ -155,6 +224,37 @@ export default function AdminPage() {
 
       {/* ── Form ── */}
       <div className={styles.form}>
+
+        {/* Step 1: Etsy URL + fetch */}
+        <div className={styles.fetchRow}>
+          <div className={styles.fetchField}>
+            <label className={styles.label}>Etsy Listing URL *</label>
+            <input
+              className={styles.input}
+              placeholder="https://www.etsy.com/listing/..."
+              value={form.etsy_url}
+              onChange={e => {
+                setForm(f => ({ ...f, etsy_url: e.target.value }))
+                setFetchMsg('')
+              }}
+            />
+          </div>
+          <button
+            className={styles.btnFetch}
+            onClick={fetchFromEtsy}
+            disabled={fetching}
+            type="button"
+          >
+            {fetching ? 'Fetching…' : 'Auto-fill from Etsy'}
+          </button>
+        </div>
+        {fetchMsg && (
+          <p className={`${styles.fetchMsg} ${fetchMsg.startsWith('✓') ? styles.fetchMsgOk : ''}`}>
+            {fetchMsg}
+          </p>
+        )}
+
+        {/* Step 2: Review/edit fields */}
         <div className={styles.formGrid}>
           <div className={styles.fieldFull}>
             <label className={styles.label}>Item Name *</label>
@@ -177,27 +277,22 @@ export default function AdminPage() {
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label}>Etsy Listing URL *</label>
-            <input
-              className={styles.input}
-              placeholder="https://www.etsy.com/listing/..."
-              value={form.etsy_url}
-              onChange={e => setForm(f => ({ ...f, etsy_url: e.target.value }))}
-            />
-          </div>
-
-          <div className={styles.fieldFull}>
             <label className={styles.label}>Image URL</label>
             <input
               className={styles.input}
-              placeholder="Paste the image URL from your Etsy listing"
+              placeholder="Auto-filled from Etsy, or paste manually"
               value={form.image_url}
               onChange={e => setForm(f => ({ ...f, image_url: e.target.value }))}
             />
-            <p className={styles.hint}>
-              On your Etsy listing page, right-click the main photo → "Copy image address" and paste it here.
-            </p>
           </div>
+
+          {form.image_url && (
+            <div className={styles.fieldFull}>
+              <div className={styles.imagePreview}>
+                <img src={form.image_url} alt="Preview" onError={e => e.currentTarget.style.display = 'none'} />
+              </div>
+            </div>
+          )}
 
           <div className={styles.fieldFull}>
             <label className={styles.label}>Categories</label>
@@ -250,10 +345,10 @@ export default function AdminPage() {
         <div className={styles.listingList}>
           {listings.map(listing => (
             <div key={listing.id} className={`${styles.listingRow} ${listing.sold ? styles.listingRowSold : ''}`}>
-              {listing.image_url && (
-                <img src={listing.image_url} alt={listing.title} className={styles.thumb} />
-              )}
-              {!listing.image_url && <div className={styles.thumbEmpty} />}
+              {listing.image_url
+                ? <img src={listing.image_url} alt={listing.title} className={styles.thumb} />
+                : <div className={styles.thumbEmpty} />
+              }
               <div className={styles.listingInfo}>
                 <p className={styles.listingTitle}>{listing.title}</p>
                 <p className={styles.listingMeta}>

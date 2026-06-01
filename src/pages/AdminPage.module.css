@@ -279,3 +279,72 @@
   .fieldFull { grid-column: 1; }
   .listingActions { flex-direction: column; }
 }
+
+/* ── Fetch row ── */
+.fetchRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+.fetchField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.btnFetch {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--fawn);
+  color: var(--surface);
+  border: none;
+  padding: 11px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+  height: 42px;
+}
+
+.btnFetch:hover { opacity: 0.85; }
+.btnFetch:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.fetchMsg {
+  font-size: 12px;
+  color: var(--warm-mid);
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+
+.fetchMsgOk {
+  color: #5a7a5a;
+}
+
+/* ── Image preview ── */
+.imagePreview {
+  width: 120px;
+  height: 120px;
+  background: var(--beige);
+  overflow: hidden;
+}
+
+.imagePreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .fetchRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btnFetch {
+    width: 100%;
+  }
+}
