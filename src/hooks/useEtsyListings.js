@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { placeholderListings } from '../data/placeholderListings.js'
+import listingsData from '../data/listings.json'
 
 const API_KEY = import.meta.env.VITE_ETSY_API_KEY
 const SHOP_ID = import.meta.env.VITE_ETSY_SHOP_ID || 'ornamentalvalue'
@@ -17,15 +17,35 @@ function normaliseTags(tags = []) {
   return tags.map(t => t.toLowerCase().trim())
 }
 
+// Dynamically import all images from the listings folder
+const imageModules = import.meta.glob('../assets/listings/*.{jpg,jpeg,png,webp,avif}', { eager: true })
+
+function resolveImage(filename) {
+  if (!filename) return null
+  const key = `../assets/listings/${filename}`
+  return imageModules[key]?.default || null
+}
+
+// Build listings from JSON, resolving image paths
+const jsonListings = listingsData.map(item => ({
+  id:       item.id,
+  title:    item.title,
+  price:    item.price ? { amount: parseFloat(item.price.replace('$', '')) * 100, divisor: 100 } : null,
+  url:      item.url,
+  tags:     normaliseTags(item.tags),
+  image:    resolveImage(item.image),
+  imageAlt: item.title,
+}))
+
 export function useEtsyListings() {
   const [listings, setListings] = useState([])
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState(null)
 
   useEffect(() => {
-    // No API key — show placeholders silently
+    // No API key — use JSON listings
     if (!API_KEY) {
-      setListings(placeholderListings)
+      setListings(jsonListings)
       setLoading(false)
       return
     }
@@ -47,7 +67,6 @@ export function useEtsyListings() {
         if (!res.ok) throw new Error(`Etsy API error: ${res.status} ${res.statusText}`)
 
         const data = await res.json()
-
         const items = (data.results || []).map(item => ({
           id:       item.listing_id,
           title:    item.title,
@@ -58,12 +77,11 @@ export function useEtsyListings() {
           imageAlt: item.images?.[0]?.alt_text || item.title,
         }))
 
-        // If shop has no listings yet, fall back to placeholders
-        setListings(items.length > 0 ? items : placeholderListings)
+        // Fall back to JSON listings if shop is empty
+        setListings(items.length > 0 ? items : jsonListings)
       } catch (err) {
-        // On any fetch error, fall back to placeholders rather than showing an error
-        setError(null)
-        setListings(placeholderListings)
+        // On any fetch error, fall back to JSON listings
+        setListings(jsonListings)
       } finally {
         setLoading(false)
       }

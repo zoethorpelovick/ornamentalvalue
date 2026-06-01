@@ -1,0 +1,58 @@
+[
+  {
+    "id": "1",
+    "title": "Hutsul Folk Art Candelabra",
+    "price": "",
+    "tags": ["candle-holders", "objet"],
+    "image": "hutsul-candelabra.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  },
+  {
+    "id": "2",
+    "title": "Hand Carved Dump Truck",
+    "price": "",
+    "tags": ["objet"],
+    "image": "wooden-dump-truck.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  },
+  {
+    "id": "3",
+    "title": "Carved Wooden Shell Bowl",
+    "price": "",
+    "tags": ["trays", "objet"],
+    "image": "wooden-shell-bowl.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  },
+  {
+    "id": "4",
+    "title": "Mertens Kunst Coat Hanger",
+    "price": "",
+    "tags": ["objet"],
+    "image": "mertens-kunst-coat-hanger.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  },
+  {
+    "id": "5",
+    "title": "Danish Modernist Candelabras",
+    "price": "",
+    "tags": ["candle-holders"],
+    "image": "danish-candelabras.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  },
+  {
+    "id": "6",
+    "title": "Capiz Pineapple Dishes",
+    "price": "",
+    "tags": ["trays"],
+    "image": "capiz-pineapple-dishes.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  },
+  {
+    "id": "7",
+    "title": "Kashmir Lacquer Dish",
+    "price": "",
+    "tags": ["trays", "objet"],
+    "image": "kashmir-lacquer-dish.jpg",
+    "url": "https://www.etsy.com/shop/ornamentalvalue"
+  }
+]

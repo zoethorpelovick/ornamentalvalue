@@ -1,18 +1,18 @@
-import { useEtsyListings, filterListings } from '../hooks/useEtsyListings.js'
+import { useListings, filterListings } from '../hooks/useListings.js'
 import ProductCard from '../components/ProductCard.jsx'
 import styles from './ShopPage.module.css'
 
 const CAT_LABELS = {
-  all:             'All pieces',
+  all:              'All pieces',
   'candle-holders': 'Candle Holders',
-  vases:           'Vases',
-  trays:           'Trays & Catch-alls',
-  objet:           'Objet',
-  jewellery:       'Jewellery',
+  vases:            'Vases',
+  trays:            'Trays & Catch-alls',
+  objet:            'Objet',
+  jewellery:        'Jewellery',
 }
 
 export default function ShopPage({ activeCategory }) {
-  const { listings, loading, error } = useEtsyListings()
+  const { listings, loading } = useListings()
   const filtered = filterListings(listings, activeCategory)
   const label    = CAT_LABELS[activeCategory] || 'All pieces'
 
@@ -20,7 +20,7 @@ export default function ShopPage({ activeCategory }) {
     <div className={styles.page}>
       <div className={styles.collectionHeader}>
         <h1 className={styles.collectionTitle}>{label}</h1>
-        {!loading && !error && (
+        {!loading && (
           <span className={styles.count}>
             {filtered.length} {filtered.length === 1 ? 'object' : 'objects'}
           </span>
@@ -33,19 +33,13 @@ export default function ShopPage({ activeCategory }) {
         </div>
       )}
 
-      {error && (
-        <div className={styles.state}>
-          <p className={styles.stateText}>{error}</p>
-        </div>
-      )}
-
-      {!loading && !error && filtered.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <div className={styles.state}>
           <p className={styles.stateText}>No pieces in this category yet.</p>
         </div>
       )}
 
-      {!loading && !error && filtered.length > 0 && (
+      {!loading && filtered.length > 0 && (
         <div className={styles.grid}>
           {filtered.map(listing => (
             <ProductCard key={listing.id} listing={listing} />
