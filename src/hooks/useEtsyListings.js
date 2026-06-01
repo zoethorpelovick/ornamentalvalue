@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
+import { placeholderListings } from '../data/placeholderListings.js'
 
-const API_KEY  = import.meta.env.VITE_ETSY_API_KEY
-const SHOP_ID  = import.meta.env.VITE_ETSY_SHOP_ID || 'ornamentalvalue'
-const LIMIT    = 100  // max per request; we paginate if needed
+const API_KEY = import.meta.env.VITE_ETSY_API_KEY
+const SHOP_ID = import.meta.env.VITE_ETSY_SHOP_ID || 'ornamentalvalue'
+const LIMIT   = 100
 
-// Category tag → nav key mapping
-// Etsy tags are lowercase; we match against these keys
 export const CATEGORY_TAGS = [
   'candle-holders',
   'vases',
@@ -24,15 +23,15 @@ export function useEtsyListings() {
   const [error,    setError]    = useState(null)
 
   useEffect(() => {
+    // No API key — show placeholders silently
     if (!API_KEY) {
-      setError('VITE_ETSY_API_KEY is not set. See .env.example for setup instructions.')
+      setListings(placeholderListings)
       setLoading(false)
       return
     }
 
     async function fetchListings() {
       try {
-        // Etsy Open API v3 — active listings for a shop
         const url = new URL(
           `https://openapi.etsy.com/v3/application/shops/${SHOP_ID}/listings/active`
         )
@@ -45,13 +44,10 @@ export function useEtsyListings() {
           headers: { 'x-api-key': API_KEY },
         })
 
-        if (!res.ok) {
-          throw new Error(`Etsy API error: ${res.status} ${res.statusText}`)
-        }
+        if (!res.ok) throw new Error(`Etsy API error: ${res.status} ${res.statusText}`)
 
         const data = await res.json()
 
-        // Normalise each listing into a simple shape
         const items = (data.results || []).map(item => ({
           id:       item.listing_id,
           title:    item.title,
@@ -62,9 +58,12 @@ export function useEtsyListings() {
           imageAlt: item.images?.[0]?.alt_text || item.title,
         }))
 
-        setListings(items)
+        // If shop has no listings yet, fall back to placeholders
+        setListings(items.length > 0 ? items : placeholderListings)
       } catch (err) {
-        setError(err.message)
+        // On any fetch error, fall back to placeholders rather than showing an error
+        setError(null)
+        setListings(placeholderListings)
       } finally {
         setLoading(false)
       }
@@ -76,8 +75,6 @@ export function useEtsyListings() {
   return { listings, loading, error }
 }
 
-// Filter listings by category key
-// 'all' returns everything; otherwise checks if any tag matches the category key
 export function filterListings(listings, category) {
   if (category === 'all') return listings
   return listings.filter(l => l.tags.includes(category))
