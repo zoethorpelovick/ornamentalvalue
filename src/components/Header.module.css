@@ -27,6 +27,7 @@
 .logo {
   height: 38px;
   width: auto;
+  mix-blend-mode: multiply;
 }
 
 .logoFallback {

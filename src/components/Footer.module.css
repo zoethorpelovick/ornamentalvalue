@@ -18,6 +18,7 @@
   height: 22px;
   width: auto;
   opacity: 0.45;
+  mix-blend-mode: multiply;
   transition: opacity 0.15s ease;
 }
 
