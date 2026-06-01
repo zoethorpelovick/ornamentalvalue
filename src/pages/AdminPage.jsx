@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase.js'
+import { fetchEtsyListing } from '../utils/fetchEtsyListing.js'
 import styles from './AdminPage.module.css'
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD
-const CATEGORIES = ['candle-holders', 'vases', 'trays', 'objet', 'jewellery']
+const CATEGORIES     = ['candle-holders', 'vases', 'trays', 'objet', 'jewellery']
 
 const emptyForm = {
   title:     '',
@@ -12,39 +13,6 @@ const emptyForm = {
   etsy_url:  '',
   tags:      [],
   sold:      false,
-}
-
-// Parse an Etsy listing page HTML string for title, price, image
-function parseEtsyListing(html) {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(html, 'text/html')
-
-  // Title — og:title or h1
-  const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content')
-  const h1 = doc.querySelector('h1')?.textContent?.trim()
-  const title = (ogTitle || h1 || '').replace(/\s*\|.*$/, '').trim()
-
-  // Price — look for og:price:amount or structured data
-  const ogPrice = doc.querySelector('meta[property="og:price:amount"]')?.getAttribute('content')
-  let price = ogPrice || ''
-
-  // Try JSON-LD structured data as fallback
-  if (!price) {
-    const scripts = doc.querySelectorAll('script[type="application/ld+json"]')
-    for (const s of scripts) {
-      try {
-        const data = JSON.parse(s.textContent)
-        const offers = data.offers || (data['@graph'] || []).find(n => n.offers)?.offers
-        const offer = Array.isArray(offers) ? offers[0] : offers
-        if (offer?.price) { price = String(offer.price); break }
-      } catch {}
-    }
-  }
-
-  // Image — og:image
-  const image = doc.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
-
-  return { title, price, image }
 }
 
 export default function AdminPage() {
@@ -81,7 +49,6 @@ export default function AdminPage() {
     if (authed) loadListings()
   }, [authed])
 
-  // Fetch listing details from Etsy via CORS proxy
   async function fetchFromEtsy() {
     const url = form.etsy_url.trim()
     if (!url || !url.includes('etsy.com')) {
@@ -90,23 +57,19 @@ export default function AdminPage() {
     }
     setFetching(true)
     setFetchMsg('Fetching listing details…')
-    try {
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
-      const res = await fetch(proxyUrl)
-      const json = await res.json()
-      if (!json.contents) throw new Error('No content returned')
 
-      const { title, price, image } = parseEtsyListing(json.contents)
+    const result = await fetchEtsyListing(url)
 
+    if (result.ok) {
       setForm(f => ({
         ...f,
-        title:     title || f.title,
-        price:     price ? String(Math.round(parseFloat(price))) : f.price,
-        image_url: image || f.image_url,
+        title:     result.title || f.title,
+        price:     result.price || f.price,
+        image_url: result.image || f.image_url,
       }))
-      setFetchMsg(title ? '✓ Details fetched — review and save.' : 'Fetched, but could not parse all fields. Fill in manually.')
-    } catch (err) {
-      setFetchMsg('Could not fetch listing. You can still fill in details manually.')
+      setFetchMsg('✓ Details fetched — review and save.')
+    } else {
+      setFetchMsg('Could not fetch automatically. Fill in details manually.')
     }
     setFetching(false)
   }
@@ -222,16 +185,15 @@ export default function AdminPage() {
         </p>
       </div>
 
-      {/* ── Form ── */}
       <div className={styles.form}>
 
-        {/* Step 1: Etsy URL + fetch */}
+        {/* Etsy URL + auto-fetch */}
         <div className={styles.fetchRow}>
           <div className={styles.fetchField}>
             <label className={styles.label}>Etsy Listing URL *</label>
             <input
               className={styles.input}
-              placeholder="https://www.etsy.com/listing/..."
+              placeholder="https://www.etsy.com/au/listing/..."
               value={form.etsy_url}
               onChange={e => {
                 setForm(f => ({ ...f, etsy_url: e.target.value }))
@@ -254,7 +216,6 @@ export default function AdminPage() {
           </p>
         )}
 
-        {/* Step 2: Review/edit fields */}
         <div className={styles.formGrid}>
           <div className={styles.fieldFull}>
             <label className={styles.label}>Item Name *</label>
@@ -336,7 +297,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* ── Listing table ── */}
+      {/* Listing table */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>All Listings</h2>
         {listings.length === 0 && (
