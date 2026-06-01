@@ -1,0 +1,62 @@
+.card {
+  display: block;
+  background: var(--bone);
+  text-decoration: none;
+  color: var(--ink);
+  transition: opacity 0.2s ease;
+}
+
+.card:hover {
+  opacity: 0.85;
+}
+
+/* Alternate background tones across the grid for visual texture */
+.card:nth-child(3n+2) { background: var(--beige); }
+.card:nth-child(5n+4) { background: #ede5d8; }
+
+.imageWrap {
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: var(--beige);
+}
+
+.card:nth-child(3n+2) .imageWrap { background: #ddd0be; }
+.card:nth-child(5n+4) .imageWrap { background: #d4c3ae; }
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.card:hover .image {
+  transform: scale(1.02);
+}
+
+.imagePlaceholder {
+  width: 100%;
+  height: 100%;
+  background: var(--beige);
+}
+
+.info {
+  padding: 12px 14px 16px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.price {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--warm-mid);
+  letter-spacing: 0.05em;
+}

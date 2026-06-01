@@ -1,0 +1,124 @@
+.header {
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--fawn);
+  padding: 0 48px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 0 20px;
+  position: relative;
+}
+
+/* ── Logo ── */
+.logoBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: block;
+}
+
+.logo {
+  height: 38px;
+  width: auto;
+}
+
+.logoFallback {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+/* ── Util nav (About / Contact) ── */
+.utils {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.utilLink {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--warm-mid);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.utilLink:hover,
+.utilActive {
+  color: var(--ink);
+}
+
+/* ── Category nav ── */
+.catNav {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  border-top: 0.5px solid var(--beige);
+  padding: 13px 0;
+  flex-wrap: wrap;
+}
+
+.catBtn {
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-bottom: 0.5px solid transparent;
+  padding-bottom: 2px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.catBtn:hover {
+  color: var(--warm-mid);
+}
+
+.catActive {
+  border-bottom-color: var(--ink);
+}
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .header {
+    padding: 0 20px;
+  }
+  .topBar {
+    padding: 20px 0 14px;
+  }
+  .utils {
+    gap: 16px;
+  }
+  .utilLink {
+    font-size: 10px;
+  }
+  .catNav {
+    gap: 16px;
+    padding: 10px 0;
+  }
+  .catBtn {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+}
