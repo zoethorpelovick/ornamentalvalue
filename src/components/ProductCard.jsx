@@ -3,8 +3,8 @@ import styles from './ProductCard.module.css'
 export default function ProductCard({ listing }) {
   const { title, price, url, image, imageAlt } = listing
 
-  const priceDisplay = price
-    ? `$${(price.amount / price.divisor).toFixed(0)}`
+  const priceDisplay = price != null && price !== ''
+    ? `$${typeof price === 'object' ? (price.amount / price.divisor).toFixed(0) : Number(price).toFixed(0)}`
     : null
 
   return (
