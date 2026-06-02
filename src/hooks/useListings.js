@@ -43,7 +43,7 @@ export function useListings() {
         setListings(data.map(item => ({
           id:       item.id,
           title:    item.title,
-          price:    item.price ? `$${item.price}` : null,
+          price:    item.price ?? null,
           url:      item.etsy_url,
           tags:     (item.tags || []).map(t => t.toLowerCase().trim()),
           image:    item.image_url,
